@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raise the Standard · Fireworks Spiff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#001E50;--night:#0a1628;--deep:#060d1a;--card:#0e1c33;
+  --cyan:#00B0F0;--cyan2:#00c2ff;--gold:#D5A021;--gold2:#f0c04a;
+  --red:#B31942;--red2:#E63946;--cream:#F7F4EC;--muted:#8ea0bd;
+  --line:rgba(142,160,189,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--deep);color:var(--cream);font-family:'DM Sans',sans-serif;line-height:1.5;overflow-x:hidden}
+.mono{font-family:'DM Mono',monospace}
+h1,h2,h3,.bebas{font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:.02em;line-height:.95}
+.money{font-family:'DM Mono',monospace;color:var(--gold);font-weight:500}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{position:relative;z-index:2}
+
+/* STATUS PILL */
+.status{position:fixed;top:14px;right:16px;z-index:50;display:flex;align-items:center;gap:8px;
+  background:rgba(6,13,26,.82);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;
+  padding:7px 14px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.status .led{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.live .led{background:var(--cyan2);box-shadow:0 0 10px var(--cyan2)}
+.status.live{color:var(--cyan2)}
+.status.off .led{background:var(--red2)}
+.status.off{color:var(--red2)}
+
+/* HERO */
+.hero{position:relative;min-height:82vh;display:flex;flex-direction:column;justify-content:center;
+  background:radial-gradient(120% 90% at 50% 0%,#12294d 0%,var(--navy) 38%,var(--deep) 100%);overflow:hidden;border-bottom:1px solid var(--line)}
+#skycanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.hero .wrap{position:relative;z-index:3;text-align:center;padding:40px 24px}
+.brandbar{display:inline-flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:10px 18px;margin-bottom:26px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.brandbar .em{font-family:'Bebas Neue';font-style:italic;font-size:26px;color:var(--navy);line-height:1}
+.brandbar .sub{font-size:9px;letter-spacing:.22em;color:var(--navy);font-weight:700;text-transform:uppercase;border-left:2px solid var(--cyan);padding-left:10px}
+.flagline{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
+.flagline i{display:block;width:34px;height:4px;border-radius:2px}
+.flagline i:nth-child(1){background:var(--red2)}.flagline i:nth-child(2){background:var(--cream)}.flagline i:nth-child(3){background:var(--cyan)}
+.eyebrow{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan2);margin-bottom:14px;font-weight:700}
+.hero h1{font-size:clamp(60px,12vw,140px);color:var(--cream);text-shadow:0 4px 40px rgba(0,176,240,.25)}
+.hero h1 .st{color:var(--gold2)}
+.hero .tag{font-size:clamp(15px,2.2vw,19px);color:var(--cream);max-width:600px;margin:16px auto 0;opacity:.92}
+.datepill{display:inline-flex;align-items:center;gap:10px;margin-top:24px;border:1px solid var(--cyan);color:var(--cyan2);border-radius:999px;padding:9px 20px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.datepill .dot{width:7px;height:7px;border-radius:50%;background:var(--red2);box-shadow:0 0 12px var(--red2)}
+.scrolltip{margin-top:30px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+.band{padding:74px 0;border-bottom:1px solid var(--line)}
+.band.alt{background:var(--night)}
+.sec-head{max-width:660px;margin-bottom:40px}
+.kicker{display:inline-block;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--red2);font-weight:700;margin-bottom:12px}
+.band h2{font-size:clamp(38px,6vw,64px);color:var(--cream)}
+.band h2 em{font-style:normal;color:var(--cyan2)}
+.lead{color:var(--muted);font-size:16px;margin-top:12px;max-width:560px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.panel h3{font-size:24px;color:var(--cream);margin-bottom:4px}
+.panel .hint{font-size:12px;color:var(--muted);margin-bottom:16px}
+.btn{font-family:'Bebas Neue';font-size:21px;letter-spacing:.04em;border:none;cursor:pointer;border-radius:12px;padding:13px 30px;color:#fff;background:linear-gradient(100deg,var(--red2),var(--red));box-shadow:0 8px 26px rgba(179,25,66,.4);transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;border:1px solid var(--cyan);color:var(--cyan2);box-shadow:none}
+.btn.sm{font-size:16px;padding:9px 18px}
+
+/* SHELLS */
+.shells{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.shell{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px 20px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s}
+.shell:hover{transform:translateY(-4px);border-color:var(--cyan)}
+.shell .glow{position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;filter:blur(30px);opacity:.5}
+.shell .icon{font-size:30px;margin-bottom:8px;position:relative}
+.shell h3{font-size:30px;color:var(--cream);position:relative}
+.shell .trig{font-size:12.5px;color:var(--muted);min-height:34px;margin:6px 0 14px;position:relative}
+.oddsrow{display:flex;align-items:flex-end;gap:5px;height:56px;margin-bottom:6px}
+.oddsrow .bar{flex:1;border-radius:4px 4px 0 0;position:relative;display:flex;align-items:flex-start;justify-content:center;min-height:3px}
+.oddsrow .bar span{position:absolute;top:-16px;font-size:10px;color:var(--muted)}
+.odds-legend{display:flex;justify-content:space-between;font-family:'DM Mono';font-size:11px;color:var(--muted)}
+.odds-legend b{color:var(--cream);font-weight:500}
+.ev{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.ev small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.ev .money{font-size:20px}
+
+/* STAND */
+.stand{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch}
+@media(max-width:820px){.stand{grid-template-columns:1fr}}
+.benchhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.who{font-size:13px;color:var(--muted)}
+.who b{color:var(--cream)}
+.shelf{display:flex;flex-wrap:wrap;gap:10px;min-height:92px;padding:16px;background:var(--deep);border:1px solid var(--line);border-radius:12px}
+.chip{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 15px 7px 11px;cursor:pointer;transition:border-color .18s,transform .12s;animation:pop .22s ease}
+.chip:hover{border-color:var(--gold);transform:translateY(-2px)}
+.chip.locked{cursor:default;opacity:.9}
+.chip.locked:hover{border-color:var(--line);transform:none}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.chip .ic{font-size:19px}
+.chip .ct{font-family:'DM Mono';font-size:17px;color:var(--cream);font-weight:500}
+.chip .nm{font-size:11px;color:var(--muted);letter-spacing:.03em}
+.chip .val{font-family:'DM Mono';font-size:14px;color:var(--gold);font-weight:500}
+.shelf .empty{color:var(--muted);font-size:13px;margin:auto;text-align:center}
+.shelfhint{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.02em}
+.trades{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.trade{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 15px;font-size:13px;color:var(--cream);cursor:pointer;transition:border-color .2s,opacity .2s,transform .12s}
+.trade:hover:not(.dis){border-color:var(--cyan);transform:translateX(2px)}
+.trade.dis{opacity:.34;cursor:not-allowed}
+.trade .tlabel b{color:var(--cyan2)}
+.trade .tgo{font-family:'Bebas Neue';font-size:17px;color:var(--red2);letter-spacing:.04em}
+.trade.dis .tgo{color:var(--muted)}
+.benchbtns{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+
+.readout{position:relative;overflow:hidden;display:flex}
+#standcanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.55}
+.ro-inner{position:relative;z-index:2;width:100%}
+.ro-metric small,.ro-box small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.ro-metric b{font-family:'DM Mono';font-size:42px;color:var(--gold2);font-weight:500;line-height:1}
+.ro-sub{margin-top:8px;font-size:12.5px;color:var(--muted);font-family:'DM Mono';min-height:18px}
+.ro-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.ro-box{background:rgba(6,13,26,.6);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.ro-box b{font-family:'DM Mono';font-size:20px;color:var(--cream);font-weight:500}
+.ro-lit{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.ro-lit small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px}
+.litrow{display:flex;flex-wrap:wrap;gap:6px}
+.littag{font-family:'DM Mono';font-size:12px;padding:4px 9px;border-radius:6px;background:rgba(213,160,33,.14);color:var(--gold2);border:1px solid rgba(213,160,33,.25)}
+
+/* LOGIN */
+.login{max-width:420px;margin:0 auto;text-align:center}
+.login select,.login input{width:100%;background:var(--deep);border:1px solid var(--line);color:var(--cream);font-family:'DM Sans';font-size:15px;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.login select:focus,.login input:focus{outline:none;border-color:var(--cyan)}
+.notice{text-align:center;color:var(--muted);font-size:15px;padding:30px 0}
+.err{color:var(--red2);font-size:13px;min-height:18px;margin-top:4px}
+
+/* LEADERBOARD */
+.lbrow{display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px;transition:border-color .2s}
+.lbrow:hover{border-color:var(--cyan)}
+.lbrow.me{border-color:var(--gold)}
+.lbrow .rank{font-family:'Bebas Neue';font-size:26px;color:var(--muted);text-align:center}
+.lbrow.top .rank{color:var(--gold2)}
+.lbrow .name{font-size:16px;color:var(--cream);font-weight:500}
+.lbrow .mix{font-size:11px;color:var(--muted);margin-top:3px}
+.lbrow .amt{font-family:'DM Mono';font-size:22px;color:var(--gold);font-weight:500;text-align:right}
+.lbrow .amt small{display:block;font-size:10px;color:var(--muted);letter-spacing:.1em}
+.trackbar{height:5px;background:var(--deep);border-radius:3px;margin-top:8px;overflow:hidden}
+.trackbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:3px;transition:width .5s}
+.lbtotal{text-align:right;font-family:'DM Mono';color:var(--muted);font-size:13px;margin-top:14px}
+.lbtotal b{color:var(--gold2)}
+
+/* HIT LIST */
+.hlmeta{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:26px}
+.hlmeta .m b{font-family:'DM Mono';font-size:30px;color:var(--gold2);display:block;line-height:1}
+.hlmeta .m small{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hitgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.hit{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;position:relative;transition:border-color .2s,transform .2s}
+.hit:hover{border-color:var(--red2);transform:translateY(-3px)}
+.hit .age{position:absolute;top:14px;right:14px;font-family:'DM Mono';font-size:12px;font-weight:500;padding:3px 9px;border-radius:999px}
+.hit .veh{font-size:15px;color:var(--cream);font-weight:500;padding-right:60px;line-height:1.25;min-height:38px}
+.hit .stk{font-family:'DM Mono';font-size:11px;color:var(--muted);margin-top:8px}
+.hit .foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.hit .price{font-family:'DM Mono';color:var(--gold);font-size:16px}
+.hit .candle{font-size:11px;color:var(--cyan2);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+
+/* MANAGER */
+details.mgr{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 22px 22px}
+details.mgr summary{cursor:pointer;list-style:none;padding:18px 0;font-family:'Bebas Neue';font-size:26px;color:var(--cream);display:flex;align-items:center;gap:10px}
+details.mgr summary::-webkit-details-marker{display:none}
+details.mgr summary .tag{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--red2);font-family:'DM Sans';font-weight:700}
+.mgrgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.mgrgrid label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.mgrgrid input{width:100%;background:var(--deep);border:1px solid var(--line);color:var(--cream);font-family:'DM Sans';border-radius:8px;padding:10px 12px}
+.mgrgrid input:focus{outline:none;border-color:var(--cyan)}
+table.grid{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+table.grid th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:0 5px 10px;border-bottom:1px solid var(--line)}
+table.grid td{padding:7px 5px;border-bottom:1px solid rgba(142,160,189,.09)}
+table.grid td:first-child{color:var(--cream);white-space:nowrap}
+table.grid input{width:52px;background:var(--deep);border:1px solid var(--line);color:var(--cream);font-family:'DM Mono';font-size:13px;text-align:center;border-radius:6px;padding:5px 2px}
+table.grid input.pin{width:64px}
+table.grid input:focus{outline:none;border-color:var(--cyan)}
+.usedref{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+.project{background:linear-gradient(160deg,var(--navy),var(--deep));border:1px solid var(--cyan);border-radius:14px;padding:20px 22px;margin:18px 0}
+.project .lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan2);font-weight:700}
+.project .big{font-family:'DM Mono';font-size:clamp(34px,6vw,44px);color:var(--gold2);font-weight:500;line-height:1;margin:6px 0 2px}
+.project .range{font-size:13px;color:var(--muted);font-family:'DM Mono'}
+.mgrbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.mgrmsg{font-size:13px;font-family:'DM Mono';color:var(--cyan2)}
+
+/* TOAST */
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);z-index:60;opacity:0;pointer-events:none;
+  background:linear-gradient(100deg,var(--red),var(--red2));color:#fff;border-radius:14px;padding:16px 26px;box-shadow:0 12px 40px rgba(0,0,0,.5);
+  font-family:'Bebas Neue';font-size:28px;letter-spacing:.03em;transition:opacity .3s,transform .3s;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast small{display:block;font-family:'DM Sans';font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85;margin-top:2px}
+
+footer{padding:50px 0 70px;text-align:center;background:var(--deep)}
+.quote{font-family:'Bebas Neue';font-size:clamp(26px,4vw,40px);color:var(--cream);max-width:640px;margin:0 auto 6px}
+.quote span{color:var(--gold2)}
+.byline{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.disc{font-size:11px;color:var(--muted);max-width:640px;margin:26px auto 0;line-height:1.6}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="status" id="status"><span class="led"></span><span id="statusText">Connecting</span></div>
+
+<header class="hero">
+  <canvas id="skycanvas"></canvas>
+  <div class="wrap">
+    <div class="brandbar"><span class="em">EMICH</span><span class="sub">Volkswagen<br>of Boulder</span></div>
+    <div class="flagline"><i></i><i></i><i></i></div>
+    <div class="eyebrow">Live Sales Spiff</div>
+    <h1>RAISE THE <span class="st">STANDARD</span></h1>
+    <p class="tag">Earn fireworks on the floor, then light them. Every burst is drawn live and locks in the moment you light it. Everyone sees the board, in real time.</p>
+    <div class="datepill"><span class="dot"></span> <span id="heroPeriod">July 1 - 15, 2026</span></div>
+    <div class="scrolltip">Scroll to your shelf ↓</div>
+  </div>
+</header>
+
+<section class="band" id="earn">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">How you earn</span>
+      <h2>Five shells. <em>One sky.</em></h2>
+      <p class="lead">Do the work, earn the shell. Each one bursts into cash from its own odds. Harder shells carry better odds and the only shots at the Big Bang.</p>
+    </div>
+    <div class="shells" id="shellCards"></div>
+  </div>
+</section>
+
+<section class="band alt" id="stand">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Your Shelf</span>
+      <h2>Bank it or <em>light it.</em></h2>
+      <p class="lead">Tap a shell to light it and lock in the cash. Or trade up first for a shot at the ceiling. Every move is final and posts to the board for the whole floor to see.</p>
+    </div>
+    <div id="standBody"></div>
+  </div>
+</section>
+
+<section class="band" id="standings">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Live Standings</span>
+      <h2>The board.</h2>
+      <p class="lead">Committed winnings, updating across every device. What you have lit is locked. What you are still holding is yours to gamble.</p>
+    </div>
+    <div id="board"><div class="notice">Waiting on the board to be published.</div></div>
+    <div class="lbtotal" id="lbTotal"></div>
+  </div>
+</section>
+
+<section class="band alt" id="hitlist">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Live Target Board</span>
+      <h2>The Hit List.</h2>
+      <p class="lead">Used units sitting 60 days or longer. Move one during the spiff and you earn a Roman Candle, the best shell short of the Big Bang. Oldest units are your fastest cash.</p>
+    </div>
+    <div class="hlmeta" id="hlMeta"></div>
+    <div class="hitgrid" id="hitGrid"></div>
+  </div>
+</section>
+
+<section class="band" id="manager">
+  <div class="wrap">
+    <details class="mgr">
+      <summary>Manager setup <span class="tag">GM only</span></summary>
+      <div class="mgrgrid">
+        <div><label>Manager key</label><input id="mKey" type="password" placeholder="required to publish"></div>
+        <div><label>Spiff period</label><input id="mPeriod" value="July 1 - 15, 2026"></div>
+      </div>
+      <p class="hint">Enter each rep's earned fireworks for the current period. Pre-filled with last period's real counts. PIN is optional, leave blank for name-only access.</p>
+      <table class="grid" id="mTable"></table>
+      <div class="project">
+        <div class="lab">Projected team payout</div>
+        <div class="big money" id="mExp">$0</div>
+        <div class="range" id="mRange">likely range loading</div>
+      </div>
+      <div class="mgrbtns">
+        <button class="btn sm" id="mPublish">Publish board</button>
+        <button class="btn sm ghost" id="mReset">Reset board</button>
+        <span class="mgrmsg" id="mMsg"></span>
+      </div>
+      <p class="disc" style="margin-top:18px;text-align:left">Publishing seeds every rep's shelf and clears prior lit history. Reset wipes the board. Payout projection is a Monte Carlo estimate over 5,000 runs, not a guarantee. Randomness is drawn server-side at light time so results cannot be changed after the fact.</p>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <div class="quote">You are never wrong to do <span>the right thing.</span></div>
+  <div class="byline">Wade Seymour · Emich Volkswagen of Boulder</div>
+  <p class="disc">Live spiff board. Shell values, odds, and earned counts are set by the manager. Draws are server-authoritative and lock at light time. Hit-list credits are seeded from used-unit counts and adjusted by the manager, since sold vehicles leave the current inventory snapshot.</p>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ============ CONFIG ============ */
+const API="/api/spiff";
+const TIERS=[20,50,100,250];
+const TIERCOL={20:"#00B0F0",50:"#00c2ff",100:"#D5A021",250:"#B31942"};
+const SHELLORDER=["firecracker","sparkler","bottlerocket","romancandle","bigbang"];
+const META={
+  firecracker:{label:"Firecracker",icon:"🧨",color:"#E63946",trigger:"Appointment shown"},
+  bottlerocket:{label:"Bottle Rocket",icon:"🚀",color:"#00B0F0",trigger:"Visit sold"},
+  romancandle:{label:"Roman Candle",icon:"🕯️",color:"#D5A021",trigger:"Hit-list unit sold (used 60+ days)"},
+  sparkler:{label:"Sparkler",icon:"✨",color:"#f0c04a",trigger:"F&I product sold"},
+  bigbang:{label:"The Big Bang",icon:"💥",color:"#B31942",trigger:"4+ products on one deal OR $4K+ gross"},
+};
+const CARDORDER=["firecracker","bottlerocket","romancandle","sparkler","bigbang"];
+const TRADES=[
+  {cost:{firecracker:2},gain:"bottlerocket"},
+  {cost:{sparkler:2},gain:"bottlerocket"},
+  {cost:{bottlerocket:2},gain:"romancandle"},
+  {cost:{romancandle:2},gain:"bigbang"},
+];
+const DEFAULT_ODDS={
+  firecracker:{20:0.89,50:0.09,100:0.02,250:0.00},
+  bottlerocket:{20:0.52,50:0.37,100:0.10,250:0.01},
+  sparkler:{20:0.84,50:0.13,100:0.03,250:0.00},
+  romancandle:{20:0.17,50:0.37,100:0.38,250:0.08},
+  bigbang:{20:0.00,50:0.00,100:0.45,250:0.55},
+};
+/* last period real counts for manager pre-fill (June 16-30 2026) */
+const SEED_ROWS=[
+  {rep:"Aaron Bergen",    appts:6, visits:8, fi:8, big:0, hit:1, used:3},
+  {rep:"Alonso Rodriguez",appts:8, visits:8, fi:9, big:1, hit:2, used:6},
+  {rep:"Josh Curtis",     appts:7, visits:4, fi:1, big:0, hit:1, used:4},
+  {rep:"Kiefer Stumpp",   appts:4, visits:2, fi:0, big:0, hit:1, used:2},
+  {rep:"Robert Fuell",    appts:4, visits:5, fi:7, big:1, hit:1, used:4},
+  {rep:"Samuel Clark",    appts:12,visits:6, fi:4, big:0, hit:1, used:4},
+];
+const HITLIST=[
+  {age:173,stk:"P008309",veh:"2022 Audi e-tron GT Premium Plus quattro",price:39483},
+  {age:79,stk:"P045360",veh:"2023 Audi Q4 e-tron Prestige quattro",price:26559},
+  {age:79,stk:"P033978",veh:"2024 Rivian R1S Adventure Quad Motor",price:69901},
+  {age:79,stk:"P311001",veh:"2023 Volkswagen Taos 1.5T SEL",price:23127},
+  {age:79,stk:"P075296",veh:"2023 Audi Q4 e-tron Premium Plus quattro",price:28465},
+  {age:77,stk:"D003877",veh:"2025 Volkswagen Tiguan 2.0T S",price:26248},
+  {age:76,stk:"P002951",veh:"2023 Volkswagen ID.4 Pro S",price:23253},
+  {age:76,stk:"P041196",veh:"2023 Volkswagen ID.4 Pro S Plus",price:27488},
+  {age:76,stk:"P001702",veh:"2022 Rivian R1T Launch Edition Quad Motor",price:50435},
+  {age:75,stk:"P000286",veh:"2023 Rivian R1S Launch Edition",price:65997},
+  {age:74,stk:"T036675",veh:"2023 Acura MDX Technology SH-AWD",price:38346},
+  {age:72,stk:"P041131",veh:"2023 Volkswagen ID.4 Pro S Plus",price:26719},
+  {age:72,stk:"P017517",veh:"2024 Audi Q8 e-tron Prestige quattro",price:46077},
+  {age:70,stk:"P343027",veh:"2023 Volkswagen Taos 1.5T SEL",price:23577},
+  {age:68,stk:"P014866",veh:"2024 Audi Q4 e-tron Premium Plus quattro",price:32303},
+  {age:64,stk:"T659654",veh:"2025 Mazda MX-5 Miata Club",price:33733},
+];
+
+const fmt=n=>"$"+Math.round(n).toLocaleString();
+const ev=o=>TIERS.reduce((s,v)=>s+v*Number(o?.[v]??0),0);
+const topTier=(o)=>Math.max(...TIERS.filter(v=>Number(o?.[v]??0)>0));
+
+/* ============ STATE ============ */
+let STATE=null, online=false, busy=false;
+let me=JSON.parse(localStorage.getItem("spiff_me")||"null"); // {rep,pin}
+
+function setStatus(){
+  const el=document.getElementById("status"),t=document.getElementById("statusText");
+  el.className="status "+(online?"live":"off");
+  t.textContent=online?(STATE&&STATE.seededAt?"Live":"Live · not published"):"Offline";
+}
+let lastSig="";
+async function pull(){
+  try{const r=await fetch(API,{cache:"no-store"});STATE=await r.json();online=true;}
+  catch(e){online=false;}
+  const sig=(online?"1":"0")+"|"+(STATE?STATE.updatedAt:"")+"|"+(STATE&&STATE.seededAt);
+  if(sig!==lastSig){lastSig=sig;renderAll();}else{setStatus();}
+}
+async function act(payload){
+  const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(d.error)throw new Error(d.error);
+  STATE={period:d.period,odds:d.odds,reps:d.reps,seededAt:d.seededAt,updatedAt:d.updatedAt};
+  return d;
+}
+const odds=()=>(STATE&&STATE.odds)||DEFAULT_ODDS;
+
+/* ============ SHELL CARDS ============ */
+function renderShells(){
+  const O=odds();
+  document.getElementById("shellCards").innerHTML=CARDORDER.map(k=>{
+    const f=META[k],o=O[k]||DEFAULT_ODDS[k];
+    const maxp=Math.max(...TIERS.map(v=>Number(o[v]||0)));
+    const bars=TIERS.map(v=>{const p=Number(o[v]||0);const h=p>0?Math.max(6,(p/maxp)*100):2;
+      return `<div class="bar" style="height:${h}%;background:${TIERCOL[v]};opacity:${p>0?1:.15}"><span>${p>0?Math.round(p*100)+'%':''}</span></div>`;}).join('');
+    return `<div class="shell"><div class="glow" style="background:${f.color}"></div>
+      <div class="icon">${f.icon}</div><h3>${f.label}</h3><div class="trig">${f.trigger}</div>
+      <div class="oddsrow">${bars}</div>
+      <div class="odds-legend">${TIERS.map(v=>`<b>$${v}</b>`).join('')}</div>
+      <div class="ev"><small>Avg burst</small><span class="money">${fmt(ev(o))}</span></div></div>`;
+  }).join('');
+}
+
+/* ============ THE STAND (live) ============ */
+function renderStand(){
+  const body=document.getElementById("standBody");
+  if(!STATE||!STATE.seededAt){
+    body.innerHTML=`<div class="notice">The board is not published yet. Your manager seeds the shelves from the Manager setup below.</div>`;
+    return;
+  }
+  const names=Object.keys(STATE.reps);
+  if(!me||!STATE.reps[me.rep]){
+    body.innerHTML=`<div class="panel"><div class="login">
+      <h3 style="margin-bottom:14px">Grab your shelf</h3>
+      <select id="loginRep"><option value="">Pick your name</option>${names.map(n=>`<option>${n}</option>`).join('')}</select>
+      <input id="loginPin" placeholder="PIN (only if your manager set one)" autocomplete="off">
+      <div class="err" id="loginErr"></div>
+      <button class="btn" id="loginBtn" style="width:100%">Open my shelf</button>
+    </div></div>`;
+    document.getElementById("loginBtn").onclick=()=>{
+      const rep=document.getElementById("loginRep").value;
+      const pin=document.getElementById("loginPin").value.trim();
+      if(!rep){document.getElementById("loginErr").textContent="Pick your name first.";return;}
+      const r=STATE.reps[rep];
+      if(r.hasPin&&!pin){document.getElementById("loginErr").textContent="This shelf needs a PIN.";return;}
+      me={rep,pin};localStorage.setItem("spiff_me",JSON.stringify(me));renderStand();
+    };
+    return;
+  }
+  const r=STATE.reps[me.rep];
+  const shelf=r.shelf, O=odds();
+  const chips=SHELLORDER.filter(k=>shelf[k]>0).map(k=>
+    `<div class="chip" data-light="${k}" title="Light one ${META[k].label}"><span class="ic">${META[k].icon}</span><span class="ct">${shelf[k]}</span><span class="nm">${META[k].label}</span></div>`).join('');
+  const anyLeft=SHELLORDER.some(k=>shelf[k]>0);
+  const trades=TRADES.map((t,i)=>{const k=Object.keys(t.cost)[0],need=t.cost[k],ok=(shelf[k]||0)>=need;
+    return `<div class="trade ${ok?'':'dis'}" data-trade="${i}">
+      <span class="tlabel">${need} ${META[k].icon} <b>${META[k].label}</b> &nbsp;→&nbsp; 1 ${META[t.gain].icon} ${META[t.gain].label}</span>
+      <span class="tgo">trade</span></div>`;}).join('');
+  const shelfEV=SHELLORDER.reduce((s,k)=>s+(shelf[k]||0)*ev(O[k]),0);
+  const ceil=SHELLORDER.reduce((s,k)=>s+((shelf[k]||0)?(shelf[k]*topTier(O[k])):0),0);
+  let pNo=1;for(const k of SHELLORDER)pNo*=Math.pow(1-Number(O[k]?.[250]||0),shelf[k]||0);
+  const jack=Math.round((1-pNo)*100);
+  const lit=r.lit.slice().reverse();
+  const litTags=lit.length?lit.map(l=>`<span class="littag">${META[l.shell].icon} ${fmt(l.value)}</span>`).join(''):'<span style="color:var(--muted);font-size:12px">Nothing lit yet.</span>';
+
+  body.innerHTML=`<div class="stand">
+    <div class="bench panel">
+      <div class="benchhead">
+        <div><h3>The shelf</h3><p class="hint">Tap a shell to light it. Lit fireworks lock and post to the board.</p></div>
+        <div class="who">Signed in as <b>${me.rep}</b> · <a href="#" id="switchRep" style="color:var(--cyan2)">switch</a></div>
+      </div>
+      <div class="shelf">${chips||'<span class="empty">All lit. Nice work. Check the board below.</span>'}</div>
+      <div class="shelfhint">${anyLeft?'Tap to light one. Trade up first if you want a bigger swing.':''}</div>
+      <div class="trades">${trades}</div>
+      <div class="benchbtns">
+        <button class="btn" id="lightAllBtn" ${anyLeft?'':'disabled'}>Light everything</button>
+      </div>
+    </div>
+    <div class="readout panel">
+      <canvas id="standcanvas"></canvas>
+      <div class="ro-inner">
+        <div class="ro-metric"><small>Locked so far</small><b class="money">${fmt(r.total)}</b></div>
+        <div class="ro-sub">${anyLeft?`still holding about ${fmt(shelfEV)} in expected value`:'shelf is empty'}</div>
+        <div class="ro-grid">
+          <div class="ro-box"><small>Shot at a $250</small><b>${jack}%</b></div>
+          <div class="ro-box"><small>If it all hits top</small><b class="money">${fmt(ceil)}</b></div>
+        </div>
+        <div class="ro-lit"><small>Locked fireworks (${lit.length})</small><div class="litrow">${litTags}</div></div>
+      </div>
+    </div>
+  </div>`;
+
+  if(standFx&&standFx.stop)standFx.stop();
+  standFx=makeFireworks(document.getElementById("standcanvas"),{fade:0.30});
+  document.getElementById("switchRep").onclick=(e)=>{e.preventDefault();me=null;localStorage.removeItem("spiff_me");renderStand();};
+  body.querySelectorAll(".chip[data-light]").forEach(c=>c.onclick=()=>lightOne(c.dataset.light));
+  body.querySelectorAll(".trade:not(.dis)").forEach(t=>t.onclick=()=>doTrade(+t.dataset.trade));
+  document.getElementById("lightAllBtn").onclick=lightAll;
+}
+
+async function lightOne(shell){
+  if(busy)return;busy=true;
+  try{
+    const d=await act({action:"light",rep:me.rep,pin:me.pin,shell});
+    if(d.justLit){burstStand(6);toast(d.justLit.shell,d.justLit.value);}
+    renderAll();
+  }catch(e){toastErr(e.message);}finally{busy=false;}
+}
+async function doTrade(i){
+  if(busy)return;
+  const t=TRADES[i],k=Object.keys(t.cost)[0];
+  if(!confirm(`Trade ${t.cost[k]} ${META[k].label} for 1 ${META[t.gain].label}? Trades are final.`))return;
+  busy=true;
+  try{await act({action:"trade",rep:me.rep,pin:me.pin,tradeIndex:i});renderAll();}
+  catch(e){toastErr(e.message);}finally{busy=false;}
+}
+async function lightAll(){
+  if(busy)return;
+  if(!confirm("Light every firework on your shelf now? This locks in all of them."))return;
+  busy=true;
+  try{
+    const d=await act({action:"lightAll",rep:me.rep,pin:me.pin});
+    const sum=(d.results||[]).reduce((s,x)=>s+x.value,0);
+    burstStand(12);toast("finale",sum,"the whole shelf");
+    renderAll();
+  }catch(e){toastErr(e.message);}finally{busy=false;}
+}
+
+/* ============ LEADERBOARD ============ */
+function renderBoard(){
+  const board=document.getElementById("board");
+  if(!STATE||!STATE.seededAt){board.innerHTML=`<div class="notice">Waiting on the board to be published.</div>`;document.getElementById("lbTotal").textContent="";return;}
+  const rows=Object.entries(STATE.reps).map(([name,r])=>{
+    const remaining=SHELLORDER.reduce((s,k)=>s+(r.shelf[k]||0),0);
+    return {name,total:r.total,lit:r.lit.length,remaining,mix:r.lit};
+  }).sort((a,b)=>b.total-a.total);
+  const top=Math.max(1,...rows.map(r=>r.total));
+  board.innerHTML=rows.map((r,i)=>{
+    const c={20:0,50:0,100:0,250:0};r.mix.forEach(l=>c[l.value]++);
+    const mixtxt=[c[250]&&`${c[250]}×$250`,c[100]&&`${c[100]}×$100`,c[50]&&`${c[50]}×$50`,c[20]&&`${c[20]}×$20`].filter(Boolean).join(' · ')||'nothing lit yet';
+    return `<div class="lbrow ${i===0&&r.total>0?'top':''} ${me&&me.rep===r.name?'me':''}">
+      <div class="rank">${i+1}</div>
+      <div><div class="name">${r.name}</div><div class="mix">${mixtxt} · ${r.remaining} unlit</div>
+        <div class="trackbar"><i style="width:${(r.total/top*100).toFixed(0)}%"></i></div></div>
+      <div class="amt money">${fmt(r.total)}<small>locked</small></div></div>`;
+  }).join('');
+  const grand=rows.reduce((s,r)=>s+r.total,0);
+  document.getElementById("lbTotal").innerHTML=`Team locked so far: <b>${fmt(grand)}</b>`;
+}
+
+/* ============ HIT LIST ============ */
+function renderHitList(){
+  document.getElementById("hlMeta").innerHTML=`
+    <div class="m"><b>${HITLIST.length}</b><small>Units on the list</small></div>
+    <div class="m"><b>${HITLIST[0].age}</b><small>Oldest unit (days)</small></div>
+    <div class="m"><b class="money">${fmt(ev(odds().romancandle||DEFAULT_ODDS.romancandle))}</b><small>Avg Roman Candle</small></div>`;
+  document.getElementById("hitGrid").innerHTML=HITLIST.map(h=>{
+    const heat=h.age>=120?'#B31942':h.age>=75?'#E63946':'#D5A021';
+    return `<div class="hit"><span class="age" style="background:${heat}22;color:${heat}">${h.age}d</span>
+      <div class="veh">${h.veh}</div><div class="stk">${h.stk}</div>
+      <div class="foot"><span class="price money">$${h.price.toLocaleString()}</span><span class="candle">🕯️ Roman Candle</span></div></div>`;
+  }).join('');
+}
+
+/* ============ MANAGER ============ */
+function renderManager(){
+  const t=document.getElementById("mTable");
+  if(t.dataset.built)return; // build once so inputs are not clobbered on poll
+  t.dataset.built="1";
+  t.innerHTML=`<tr><th>Rep</th><th>🧨 Appts</th><th>🚀 Visits</th><th>✨ F&I</th><th>🕯️ Hit</th><th>💥 Big</th><th>PIN</th></tr>`+
+    SEED_ROWS.map((r,i)=>`<tr>
+      <td>${r.rep}</td>
+      <td><input data-i="${i}" data-k="appts" value="${r.appts}"></td>
+      <td><input data-i="${i}" data-k="visits" value="${r.visits}"></td>
+      <td><input data-i="${i}" data-k="fi" value="${r.fi}"></td>
+      <td><input data-i="${i}" data-k="hit" value="${r.hit}"><span class="usedref">${r.used} used sold</span></td>
+      <td><input data-i="${i}" data-k="big" value="${r.big}"></td>
+      <td><input class="pin" data-i="${i}" data-k="pin" value="" placeholder="none"></td>
+    </tr>`).join('');
+  t.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",e=>{
+    const i=+e.target.dataset.i,k=e.target.dataset.k;
+    SEED_ROWS[i][k]=k==="pin"?e.target.value:Math.max(0,parseInt(e.target.value)||0);
+    if(k!=="pin")projectBudget();
+  }));
+  document.getElementById("mPublish").onclick=publish;
+  document.getElementById("mReset").onclick=resetBoard;
+  projectBudget();
+}
+function draw(o){let r=Math.random(),c=0;for(const v of TIERS){c+=Number(o?.[v]??0);if(r<=c)return v;}return 0;}
+function projectBudget(){
+  const O=odds(),N=5000,totals=[];let min=1e9,max=0;
+  for(let s=0;s<N;s++){let tot=0;
+    for(const r of SEED_ROWS){
+      for(let i=0;i<r.appts;i++)tot+=draw(O.firecracker);
+      for(let i=0;i<r.visits;i++)tot+=draw(O.bottlerocket);
+      for(let i=0;i<r.fi;i++)tot+=draw(O.sparkler);
+      for(let i=0;i<r.hit;i++)tot+=draw(O.romancandle);
+      for(let i=0;i<r.big;i++)tot+=draw(O.bigbang);
+    }
+    totals.push(tot);if(tot<min)min=tot;if(tot>max)max=tot;
+  }
+  totals.sort((a,b)=>a-b);
+  const mean=totals.reduce((a,b)=>a+b,0)/N;
+  document.getElementById("mExp").textContent=fmt(mean);
+  document.getElementById("mRange").textContent=`likely ${fmt(totals[N*0.1|0])} to ${fmt(totals[N*0.9|0])} · worst ${fmt(min)} · best ${fmt(max)}`;
+}
+async function publish(){
+  const key=document.getElementById("mKey").value;
+  const period=document.getElementById("mPeriod").value;
+  if(!key){mgrMsg("Enter the manager key.",true);return;}
+  if(!confirm("Publish the board? This seeds every shelf and clears any lit history."))return;
+  const reps=SEED_ROWS.map(r=>({name:r.rep,pin:r.pin||"",shelf:{firecracker:r.appts,bottlerocket:r.visits,sparkler:r.fi,romancandle:r.hit,bigbang:r.big}}));
+  const btn=document.getElementById("mPublish"),rbtn=document.getElementById("mReset");
+  btn.disabled=true;rbtn.disabled=true;mgrMsg("Publishing... first call can take a few seconds to warm up.");
+  const t0=performance.now();
+  try{await act({action:"seed",key,period,odds:odds(),reps});
+    mgrMsg(`Board published in ${((performance.now()-t0)/1000).toFixed(1)}s. The floor is live.`);renderAll();}
+  catch(e){mgrMsg(e.message,true);}
+  finally{btn.disabled=false;rbtn.disabled=false;}
+}
+async function resetBoard(){
+  const key=document.getElementById("mKey").value;
+  if(!key){mgrMsg("Enter the manager key.",true);return;}
+  if(!confirm("Reset wipes the whole board and everyone's winnings. Continue?"))return;
+  const btn=document.getElementById("mPublish"),rbtn=document.getElementById("mReset");
+  btn.disabled=true;rbtn.disabled=true;mgrMsg("Resetting...");
+  try{await act({action:"reset",key});mgrMsg("Board reset.");me=null;localStorage.removeItem("spiff_me");renderAll();}
+  catch(e){mgrMsg(e.message,true);}
+  finally{btn.disabled=false;rbtn.disabled=false;}
+}
+function mgrMsg(m,bad){const el=document.getElementById("mMsg");el.textContent=m;el.style.color=bad?"var(--red2)":"var(--cyan2)";}
+
+/* ============ TOAST ============ */
+let toastT=null;
+function toast(shell,value,label){
+  const el=document.getElementById("toast");
+  const name=label||META[shell]?.label||"Firework";
+  el.innerHTML=`${value>0?fmt(value):"No cash"}<small>${value>0?name+" lit":name+" · dud, next one"}</small>`;
+  el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2600);
+}
+function toastErr(m){const el=document.getElementById("toast");el.innerHTML=`Hold on<small>${m}</small>`;el.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("show"),2600);}
+
+/* ============ CANVAS FIREWORKS ============ */
+function makeFireworks(canvas,opts={}){
+  if(!canvas)return null;
+  const ctx=canvas.getContext("2d");let W,H,DPR,raf=0,dead=false;
+  const rockets=[],sparks=[];
+  const palette=["#E63946","#F7F4EC","#00B0F0","#00c2ff","#D5A021","#f0c04a","#B31942"];
+  function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=canvas.clientWidth;H=canvas.clientHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  resize();window.addEventListener("resize",resize);
+  function launch(x){x=x||Math.random()*W;rockets.push({x,y:H,ty:H*(0.18+Math.random()*0.35),vy:-(6+Math.random()*3),color:palette[(Math.random()*palette.length)|0],trail:[]});}
+  function burst(x,y,color){const n=32+((Math.random()*26)|0);for(let i=0;i<n;i++){const a=(Math.PI*2*i)/n,sp=1.5+Math.random()*3.4;sparks.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color,size:1.6+Math.random()*1.5});}}
+  function frame(){
+    if(dead)return;
+    ctx.globalCompositeOperation="source-over";ctx.fillStyle="rgba(6,13,26,"+(opts.fade||0.22)+")";ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.y+=r.vy;r.vy+=0.06;r.trail.push({x:r.x,y:r.y});if(r.trail.length>8)r.trail.shift();
+      ctx.beginPath();ctx.arc(r.x,r.y,2,0,7);ctx.fillStyle=r.color;ctx.fill();
+      r.trail.forEach((t,j)=>{ctx.globalAlpha=j/r.trail.length*.6;ctx.beginPath();ctx.arc(t.x,t.y,1.4,0,7);ctx.fillStyle=r.color;ctx.fill();});ctx.globalAlpha=1;
+      if(r.y<=r.ty||r.vy>=0){burst(r.x,r.y,r.color);rockets.splice(i,1);}}
+    for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.x+=s.vx;s.y+=s.vy;s.vy+=0.05;s.vx*=0.985;s.life-=0.016;
+      if(s.life<=0){sparks.splice(i,1);continue;}ctx.globalAlpha=Math.max(0,s.life);ctx.beginPath();ctx.arc(s.x,s.y,s.size*s.life,0,7);ctx.fillStyle=s.color;ctx.fill();}
+    ctx.globalAlpha=1;raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);
+  return {launch,burst,resize,stop(){dead=true;cancelAnimationFrame(raf);window.removeEventListener("resize",resize);}};
+}
+const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let standFx=null;
+function burstStand(n){if(reduce||!standFx)return;const cv=document.getElementById("standcanvas");if(!cv)return;for(let i=0;i<n;i++)setTimeout(()=>standFx.launch(Math.random()*cv.clientWidth),i*110);}
+
+/* ============ RENDER + INIT ============ */
+function renderAll(){
+  setStatus();
+  document.getElementById("heroPeriod").textContent=(STATE&&STATE.period)||"July 1 - 15, 2026";
+  renderShells();
+  renderStand();
+  renderBoard();
+  renderHitList();
+  renderManager();
+}
+const sky=makeFireworks(document.getElementById("skycanvas"),{fade:0.18});
+if(!reduce){setInterval(()=>sky.launch(),900);setTimeout(()=>sky.launch(),300);setTimeout(()=>sky.launch(),700);}
+else{for(let i=0;i<6;i++)sky.burst(Math.random()*window.innerWidth,window.innerHeight*(.2+Math.random()*.4),"#00B0F0");}
+
+pull();
+setInterval(()=>{if(!busy)pull();},15000); // cross-browser sync
+</script>
+</body>
+</html>
