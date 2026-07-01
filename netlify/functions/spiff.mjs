@@ -28,6 +28,7 @@ const DEFAULT_ODDS = {
 const emptyState = () => ({
   period: "July 1 - 15, 2026",
   odds: DEFAULT_ODDS,
+  hitlist: [],
   reps: {},
   seededAt: null,
   updatedAt: Date.now(),
@@ -48,7 +49,7 @@ function publicState(state) {
   for (const [name, r] of Object.entries(state.reps)) {
     reps[name] = { shelf: r.shelf, lit: r.lit, total: r.total, hasPin: !!r.pin };
   }
-  return { period: state.period, odds: state.odds, reps, seededAt: state.seededAt, updatedAt: state.updatedAt };
+  return { period: state.period, odds: state.odds, hitlist: state.hitlist || [], reps, seededAt: state.seededAt, updatedAt: state.updatedAt };
 }
 
 const CORS = {
@@ -77,17 +78,52 @@ export default async (req) => {
     const reps = {};
     for (const r of body.reps || []) {
       if (!r.name) continue;
-      reps[r.name] = { shelf: sanitizeShelf(r.shelf), lit: [], total: 0, pin: (r.pin || "").trim() };
+      const shelf = sanitizeShelf(r.shelf);
+      reps[r.name] = { shelf, granted: { ...shelf }, lit: [], total: 0, pin: (r.pin || "").trim() };
     }
     state = {
       period: body.period || state.period,
       odds: body.odds || state.odds,
+      hitlist: Array.isArray(body.hitlist) ? body.hitlist : (state.hitlist || []),
       reps,
       seededAt: Date.now(),
       updatedAt: Date.now(),
     };
     await store.setJSON("state", state);
     return json(publicState(state));
+  }
+
+  // incremental daily refresh: grant only the newly earned fireworks, keep lit + shelf
+  if (action === "sync") {
+    if (body.key !== MGR) return json({ error: "Manager key does not match." }, 403);
+    if (!state.seededAt) { state.seededAt = Date.now(); state.reps = state.reps || {}; }
+    if (body.period) state.period = body.period;
+    if (body.odds) state.odds = body.odds;
+    if (Array.isArray(body.hitlist)) state.hitlist = body.hitlist;
+    const summary = [];
+    for (const r of body.reps || []) {
+      if (!r.name) continue;
+      const earned = sanitizeShelf(r.earned);
+      let rep = state.reps[r.name];
+      if (!rep) {
+        state.reps[r.name] = { shelf: { ...earned }, granted: { ...earned }, lit: [], total: 0, pin: (r.pin || "").trim() };
+        summary.push({ name: r.name, added: earned, isNew: true });
+        continue;
+      }
+      rep.granted = rep.granted || {};
+      if ((r.pin || "").trim()) rep.pin = (r.pin || "").trim();
+      const added = {};
+      for (const k of SHELLS) {
+        const g = rep.granted[k] || 0;
+        const delta = Math.max(0, (earned[k] || 0) - g);
+        if (delta > 0) { rep.shelf[k] = (rep.shelf[k] || 0) + delta; added[k] = delta; }
+        rep.granted[k] = Math.max(g, earned[k] || 0);
+      }
+      summary.push({ name: r.name, added, isNew: false });
+    }
+    state.updatedAt = Date.now();
+    await store.setJSON("state", state);
+    return json({ ...publicState(state), summary });
   }
 
   if (action === "reset") {

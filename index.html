@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#001E50;--night:#0a1628;--deep:#060d1a;--card:#0e1c33;
@@ -185,6 +186,15 @@ table.grid input:focus{outline:none;border-color:var(--cyan)}
 .project .range{font-size:13px;color:var(--muted);font-family:'DM Mono'}
 .mgrbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center}
 .mgrmsg{font-size:13px;font-family:'DM Mono';color:var(--cyan2)}
+.uploads{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:18px;margin:4px 0 18px}
+.uprow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.upcell label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px}
+.upcell input[type=file]{width:100%;font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 10px;cursor:pointer}
+.upcell input[type=file]::file-selector-button{font-family:'DM Sans';font-size:12px;font-weight:700;color:var(--navy);background:var(--cyan2);border:none;border-radius:6px;padding:6px 12px;margin-right:10px;cursor:pointer}
+.upcell.ok input[type=file]{border-color:var(--cyan)}
+.updiff{font-size:12px;font-family:'DM Mono';color:var(--muted);margin-top:12px;line-height:1.7}
+.updiff b{color:var(--cyan2)}
+.updiff .add{color:var(--gold2)}
 
 /* TOAST */
 #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);z-index:60;opacity:0;pointer-events:none;
@@ -272,19 +282,30 @@ footer{padding:50px 0 70px;text-align:center;background:var(--deep)}
         <div><label>Manager key</label><input id="mKey" type="password" placeholder="required to publish"></div>
         <div><label>Spiff period</label><input id="mPeriod" value="July 1 - 15, 2026"></div>
       </div>
-      <p class="hint">Enter each rep's earned fireworks for the current period. Pre-filled with last period's real counts. PIN is optional, leave blank for name-only access.</p>
+      <p class="hint">Upload today's reports to calculate everyone's fireworks. Counts are cumulative for the period, so each daily update only adds what is newly earned. Lit winnings are never wiped.</p>
+      <div class="uploads">
+        <div class="uprow">
+          <div class="upcell" id="cLead"><label>Lead Conversion (CSV)</label><input type="file" id="fLead" accept=".csv"></div>
+          <div class="upcell" id="cFin"><label>Finance, Counts tab</label><input type="file" id="fFin" accept=".xlsx,.xls"></div>
+          <div class="upcell" id="cFinG"><label>Finance, Gross tab (optional)</label><input type="file" id="fFinGross" accept=".xlsx,.xls"></div>
+          <div class="upcell" id="cInv"><label>Inventory / Wade's View (XLS)</label><input type="file" id="fInv" accept=".xls,.xlsx"></div>
+        </div>
+        <div class="mgrbtns"><button class="btn sm ghost" id="mParse">Read reports</button><span class="mgrmsg" id="parseMsg"></span></div>
+        <div class="updiff" id="parseDiff"></div>
+      </div>
+      <p class="hint">Review the calculated fireworks below. Hit list is auto-filled from used-unit counts as an estimate, adjust it to the aged units that actually sold. Then update the board.</p>
       <table class="grid" id="mTable"></table>
       <div class="project">
-        <div class="lab">Projected team payout</div>
+        <div class="lab">Projected team payout, full period</div>
         <div class="big money" id="mExp">$0</div>
         <div class="range" id="mRange">likely range loading</div>
       </div>
       <div class="mgrbtns">
-        <button class="btn sm" id="mPublish">Publish board</button>
-        <button class="btn sm ghost" id="mReset">Reset board</button>
+        <button class="btn sm" id="mPublish">Update board</button>
+        <button class="btn sm ghost" id="mReset">Start new period</button>
         <span class="mgrmsg" id="mMsg"></span>
       </div>
-      <p class="disc" style="margin-top:18px;text-align:left">Publishing seeds every rep's shelf and clears prior lit history. Reset wipes the board. Payout projection is a Monte Carlo estimate over 5,000 runs, not a guarantee. Randomness is drawn server-side at light time so results cannot be changed after the fact.</p>
+      <p class="disc" style="margin-top:18px;text-align:left">Update board adds the newly earned fireworks to every shelf and refreshes the hit list, keeping all lit winnings intact. Start new period wipes the whole board to zero for a fresh spiff. Payout projection is a Monte Carlo estimate over 5,000 runs of the full-period totals uploaded so far, not a guarantee. Draws are server-side at light time.</p>
     </details>
   </div>
 </section>
@@ -376,7 +397,7 @@ async function act(payload){
   const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
   const d=await r.json();
   if(d.error)throw new Error(d.error);
-  STATE={period:d.period,odds:d.odds,reps:d.reps,seededAt:d.seededAt,updatedAt:d.updatedAt};
+  STATE={period:d.period,odds:d.odds,hitlist:d.hitlist||[],reps:d.reps,seededAt:d.seededAt,updatedAt:d.updatedAt};
   return d;
 }
 const odds=()=>(STATE&&STATE.odds)||DEFAULT_ODDS;
@@ -526,15 +547,17 @@ function renderBoard(){
 
 /* ============ HIT LIST ============ */
 function renderHitList(){
+  const list=(STATE&&STATE.hitlist&&STATE.hitlist.length)?STATE.hitlist:HITLIST;
+  const oldest=list.reduce((m,h)=>Math.max(m,h.age||0),0);
   document.getElementById("hlMeta").innerHTML=`
-    <div class="m"><b>${HITLIST.length}</b><small>Units on the list</small></div>
-    <div class="m"><b>${HITLIST[0].age}</b><small>Oldest unit (days)</small></div>
+    <div class="m"><b>${list.length}</b><small>Units on the list</small></div>
+    <div class="m"><b>${oldest}</b><small>Oldest unit (days)</small></div>
     <div class="m"><b class="money">${fmt(ev(odds().romancandle||DEFAULT_ODDS.romancandle))}</b><small>Avg Roman Candle</small></div>`;
-  document.getElementById("hitGrid").innerHTML=HITLIST.map(h=>{
+  document.getElementById("hitGrid").innerHTML=list.slice().sort((a,b)=>b.age-a.age).map(h=>{
     const heat=h.age>=120?'#B31942':h.age>=75?'#E63946':'#D5A021';
     return `<div class="hit"><span class="age" style="background:${heat}22;color:${heat}">${h.age}d</span>
       <div class="veh">${h.veh}</div><div class="stk">${h.stk}</div>
-      <div class="foot"><span class="price money">$${h.price.toLocaleString()}</span><span class="candle">🕯️ Roman Candle</span></div></div>`;
+      <div class="foot"><span class="price money">$${Number(h.price||0).toLocaleString()}</span><span class="candle">🕯️ Roman Candle</span></div></div>`;
   }).join('');
 }
 
@@ -558,9 +581,104 @@ function renderManager(){
     SEED_ROWS[i][k]=k==="pin"?e.target.value:Math.max(0,parseInt(e.target.value)||0);
     if(k!=="pin")projectBudget();
   }));
-  document.getElementById("mPublish").onclick=publish;
+  document.getElementById("mPublish").onclick=update;
   document.getElementById("mReset").onclick=resetBoard;
+  document.getElementById("mParse").onclick=readReports;
   projectBudget();
+}
+function fillTable(){
+  document.querySelectorAll('#mTable input').forEach(inp=>{
+    const i=+inp.dataset.i,k=inp.dataset.k;
+    if(SEED_ROWS[i]&&k!=="pin")inp.value=SEED_ROWS[i][k];
+  });
+}
+
+/* ============ REPORT PARSING (in-browser, SheetJS) ============ */
+let parsedHitlist=null;
+const ROSTER=SEED_ROWS.map(r=>r.rep);
+const normName=n=>{n=String(n||"").trim();return n==="Joshua Curtis"?"Josh Curtis":n;};
+const findCol=(hdr,name)=>hdr.findIndex(h=>String(h).replace(/\s+/g," ").trim().toLowerCase()===name.toLowerCase());
+function rowsOf(buf){const wb=XLSX.read(new Uint8Array(buf),{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});}
+const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsArrayBuffer(f);});
+
+function parseLead(rows){
+  const h=rows[0],iU=findCol(h,"User"),iA=findCol(h,"Appts Shown"),iV=findCol(h,"Visits Sold");
+  if(iU<0||iA<0||iV<0)throw new Error("Lead Conversion columns not found");
+  const m={};
+  for(let r=1;r<rows.length;r++){const u=normName(rows[r][iU]);if(!u)continue;
+    m[u]=m[u]||{appts:0,visits:0};m[u].appts+=Math.round(+rows[r][iA]||0);m[u].visits+=Math.round(+rows[r][iV]||0);}
+  return m;
+}
+const GROSS_BIG=4000; // back-end gross that earns a Big Bang
+function parseFinanceFile(rows){
+  const hi=rows.findIndex(r=>r.some(c=>String(c).trim()==="Product & Reserve"));
+  if(hi<0)throw new Error("Finance Summary header not found");
+  const h=rows[hi],cName=findCol(h,"Name"),cDeal=findCol(h,"Deal #"),cNUO=findCol(h,"N/U/O"),cProd=findCol(h,"Product"),cPR=findCol(h,"Product & Reserve");
+  const isGross=findCol(h,"Front")>=0; // Gross tab has a Front column; Counts tab does not
+  const deals={},repfi={};let cur=null;
+  for(let r=hi+1;r<rows.length;r++){
+    const nm=String(rows[r][cName]||"").trim();if(!nm)continue;
+    if(nm.startsWith("|")){if(!cur)continue;
+      deals[String(rows[r][cDeal])]={rep:cur,pr:+rows[r][cPR]||0,nuo:String(rows[r][cNUO]||"").trim().toUpperCase()};
+    }else if(!/total|overall/i.test(String(rows[r][1]||""))){
+      cur=normName(nm);repfi[cur]=+rows[r][cProd]||0;
+    }
+  }
+  return {isGross,deals,repfi};
+}
+function parseInv(rows){
+  const h=rows[0].map(x=>String(x).replace(/\s+/g," ").trim());
+  const cA=findCol(h,"Age"),cD=findCol(h,"Disp"),cV=findCol(h,"Vehicle"),cS=findCol(h,"Stock #"),cP=findCol(h,"Price");
+  if(cA<0||cV<0)throw new Error("Inventory columns not found");
+  const hit=[];
+  for(let r=1;r<rows.length;r++){const age=+rows[r][cA];const disp=String(rows[r][cD]||"").trim();
+    if(!(age>=60))continue;if(disp.toLowerCase()==="wholesale")continue;
+    hit.push({age:Math.round(age),stk:String(rows[r][cS]||""),veh:String(rows[r][cV]||""),price:Math.round(+rows[r][cP]||0)});}
+  return hit.sort((a,b)=>b.age-a.age);
+}
+async function readReports(){
+  const fL=document.getElementById("fLead").files[0];
+  const fF=document.getElementById("fFin").files[0];
+  const fG=document.getElementById("fFinGross").files[0];
+  const fI=document.getElementById("fInv").files[0];
+  const msg=document.getElementById("parseMsg"),diff=document.getElementById("parseDiff");
+  if(!fL&&!fF&&!fG&&!fI){msg.textContent="Pick at least one report first.";msg.style.color="var(--red2)";return;}
+  msg.style.color="var(--cyan2)";msg.textContent="Reading...";
+  try{
+    let lead={},counts=null,gross=null,foundReps=new Set();
+    if(fL){lead=parseLead(rowsOf(await readFile(fL)));document.getElementById("cLead").classList.add("ok");}
+    // either finance slot can hold either tab; auto-detect and route
+    for(const [f,cell] of [[fF,"cFin"],[fG,"cFinG"]]){
+      if(!f)continue;
+      const parsed=parseFinanceFile(rowsOf(await readFile(f)));
+      if(parsed.isGross)gross=parsed;else counts=parsed;
+      document.getElementById(cell).classList.add("ok");
+    }
+    if(fI){parsedHitlist=parseInv(rowsOf(await readFile(fI)));document.getElementById("cInv").classList.add("ok");}
+    const usedSrc=counts||gross;
+    SEED_ROWS.forEach(row=>{
+      const l=lead[row.rep];
+      if(l){row.appts=l.appts;row.visits=l.visits;foundReps.add(row.rep);}
+      if(counts){row.fi=counts.repfi[row.rep]||0;foundReps.add(row.rep);}
+      if(usedSrc){let u=0;for(const d of Object.values(usedSrc.deals))if(d.rep===row.rep&&d.nuo==="U")u++;row.used=u;row.hit=u;}
+      if(counts||gross){
+        const set=new Set();
+        if(counts)for(const[dno,d]of Object.entries(counts.deals))if(d.rep===row.rep&&d.pr>=4)set.add(dno);
+        if(gross)for(const[dno,d]of Object.entries(gross.deals))if(d.rep===row.rep&&d.pr>=GROSS_BIG)set.add(dno);
+        row.big=set.size;foundReps.add(row.rep);
+      }
+    });
+    fillTable();projectBudget();
+    const parts=[];
+    if(fL||counts)parts.push(`${foundReps.size} of ${ROSTER.length} reps matched`);
+    if(gross){const n=Object.values(gross.deals).filter(d=>d.pr>=GROSS_BIG).length;parts.push(`${n} deals over $${GROSS_BIG.toLocaleString()} BE`);}
+    else if(fF||fG)parts.push("no Gross tab, add it for the $4K trigger");
+    if(fI)parts.push(`${parsedHitlist.length} hit-list units`);
+    msg.textContent="Reports read. "+parts.join(" · ");
+    const lines=SEED_ROWS.filter(r=>foundReps.has(r.rep)).map(r=>
+      `<b>${r.rep}</b>: <span class="add">${r.appts}🧨 ${r.visits}🚀 ${r.fi}✨ ${r.hit}🕯️ ${r.big}💥</span>`);
+    diff.innerHTML=lines.join("<br>")+(fI?`<br><b>Hit list</b>: <span class="add">${parsedHitlist.length} units, oldest ${parsedHitlist[0].age}d</span>`:"");
+  }catch(e){msg.style.color="var(--red2)";msg.textContent="Could not read: "+e.message;}
 }
 function draw(o){let r=Math.random(),c=0;for(const v of TIERS){c+=Number(o?.[v]??0);if(r<=c)return v;}return 0;}
 function projectBudget(){
@@ -580,27 +698,38 @@ function projectBudget(){
   document.getElementById("mExp").textContent=fmt(mean);
   document.getElementById("mRange").textContent=`likely ${fmt(totals[N*0.1|0])} to ${fmt(totals[N*0.9|0])} · worst ${fmt(min)} · best ${fmt(max)}`;
 }
-async function publish(){
+async function update(){
   const key=document.getElementById("mKey").value;
   const period=document.getElementById("mPeriod").value;
   if(!key){mgrMsg("Enter the manager key.",true);return;}
-  if(!confirm("Publish the board? This seeds every shelf and clears any lit history."))return;
-  const reps=SEED_ROWS.map(r=>({name:r.rep,pin:r.pin||"",shelf:{firecracker:r.appts,bottlerocket:r.visits,sparkler:r.fi,romancandle:r.hit,bigbang:r.big}}));
+  if(!confirm("Update the board? This adds newly earned fireworks to every shelf. Lit winnings stay put."))return;
+  const reps=SEED_ROWS.map(r=>({name:r.rep,pin:r.pin||"",earned:{firecracker:r.appts,bottlerocket:r.visits,sparkler:r.fi,romancandle:r.hit,bigbang:r.big}}));
+  const payload={action:"sync",key,period,odds:odds(),reps};
+  if(parsedHitlist)payload.hitlist=parsedHitlist;
   const btn=document.getElementById("mPublish"),rbtn=document.getElementById("mReset");
-  btn.disabled=true;rbtn.disabled=true;mgrMsg("Publishing... first call can take a few seconds to warm up.");
+  btn.disabled=true;rbtn.disabled=true;mgrMsg("Updating... first call can take a few seconds to warm up.");
   const t0=performance.now();
-  try{await act({action:"seed",key,period,odds:odds(),reps});
-    mgrMsg(`Board published in ${((performance.now()-t0)/1000).toFixed(1)}s. The floor is live.`);renderAll();}
-  catch(e){mgrMsg(e.message,true);}
+  try{
+    const d=await act(payload);
+    const changed=(d.summary||[]).filter(s=>s.isNew||Object.values(s.added||{}).some(v=>v>0));
+    let note;
+    if(!changed.length)note="No new fireworks since last update.";
+    else note="Added: "+changed.map(s=>{
+      const a=s.added||{};const bits=SHELLORDER.filter(k=>a[k]>0).map(k=>`+${a[k]}${META[k].icon}`).join(" ");
+      return `${s.name} ${s.isNew?"(new) ":""}${bits||"none"}`;
+    }).join(" · ");
+    mgrMsg(`Board updated in ${((performance.now()-t0)/1000).toFixed(1)}s. ${note}`);
+    renderAll();
+  }catch(e){mgrMsg(e.message,true);}
   finally{btn.disabled=false;rbtn.disabled=false;}
 }
 async function resetBoard(){
   const key=document.getElementById("mKey").value;
   if(!key){mgrMsg("Enter the manager key.",true);return;}
-  if(!confirm("Reset wipes the whole board and everyone's winnings. Continue?"))return;
+  if(!confirm("Start a new period? This wipes every shelf and all winnings to zero."))return;
   const btn=document.getElementById("mPublish"),rbtn=document.getElementById("mReset");
   btn.disabled=true;rbtn.disabled=true;mgrMsg("Resetting...");
-  try{await act({action:"reset",key});mgrMsg("Board reset.");me=null;localStorage.removeItem("spiff_me");renderAll();}
+  try{await act({action:"reset",key});mgrMsg("New period started. Board is clear.");me=null;localStorage.removeItem("spiff_me");renderAll();}
   catch(e){mgrMsg(e.message,true);}
   finally{btn.disabled=false;rbtn.disabled=false;}
 }
