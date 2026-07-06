@@ -133,6 +133,16 @@ export default async (req) => {
     return json(publicState(state));
   }
 
+  if (action === "removeRep") {
+    if (body.key !== MGR) return json({ error: "Manager key does not match." }, 403);
+    if (body.rep && state.reps[body.rep]) {
+      delete state.reps[body.rep];
+      state.updatedAt = Date.now();
+      await store.setJSON("state", state);
+    }
+    return json(publicState(state));
+  }
+
   /* ---------- rep actions (locking) ---------- */
   const rep = state.reps[body.rep];
   if (!rep) return json({ error: "That rep is not on the board yet." }, 400);

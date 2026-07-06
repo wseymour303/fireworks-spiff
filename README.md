@@ -30,12 +30,12 @@ drag-and-drop single file.
 
 Day one:
 1. Open the site, scroll to **Manager setup**, enter your `MANAGER_KEY`.
-2. Upload the three reports (Lead Conversion CSV, Finance Summary, Wade's View
-   inventory) and hit **Read reports**. The table fills with each rep's earned
-   fireworks and the hit list updates. Everything is parsed in your browser; the
-   raw files never leave your machine.
-3. Adjust the hit-list column to the aged units that actually sold, since that is
-   an estimate. Watch the projected payout, then hit **Update board**.
+2. Upload the reports (Lead Conversion CSV, Finance Summary Counts tab, Car
+   Deals, and optionally the Finance Gross tab) and hit **Read reports**. The
+   table fills with each rep's earned fireworks, hit-list credits counted from
+   actual aged-unit sales. Everything is parsed in your browser; the raw files
+   never leave your machine.
+3. Review the table, watch the projected payout, then hit **Update board**.
 
 Every day after:
 - Export the same three reports for the period to date, upload, **Read reports**,
@@ -55,17 +55,23 @@ Column mapping is by header name, so minor reordering in the exports is fine.
 
 - Lead Conversion (CSV): sums Appts Shown (firecrackers) and Visits Sold (bottle
   rockets) per User.
-- Finance Summary, Counts tab (XLSX): Product count per rep (sparklers), deals with
-  Product & Reserve count of 4 or more (Big Bangs), and used-unit count (hit-list
-  estimate).
-- Finance Summary, Gross tab (XLSX, optional): back-end gross per deal. Any deal at
-  or above $4,000 back-end gross also earns a Big Bang. Deals that clear both the
-  4-product and $4K bars are counted once, matched by deal number.
-- Wade's View (XLS): retail used units aged 60 days or more become the hit list.
+- Finance Summary, Counts tab (XLSX): Product count per rep (sparklers) and deals
+  with a Product & Reserve count of 4 or more (Big Bangs).
+- Finance Summary, Gross tab (XLSX, optional): back-end gross per deal for the $4K
+  Big Bang trigger.
+- Car Deals (XLSX): the deal log. Used deals with Age at or above 60 days earn a
+  Roman Candle (actual hit-list sales, no more estimating), and Ttl BE at or above
+  $4,000 earns a Big Bang. Split deals credit both Sls 1 and Sls 2. Seller names in
+  the report are short form ("Aaron B") and are matched to the roster by first name
+  plus last initial.
 
-Either finance slot accepts either tab; the reader detects Counts vs Gross by the
-Front column and routes automatically. The $4K back-end threshold lives in
-`GROSS_BIG` near the top of the parser in `index.html`.
+All three Big Bang sources (4+ products, Gross tab $4K, Car Deals $4K BE) are
+unioned by deal number, so a deal never counts twice. Either finance slot accepts
+either tab; the reader detects Counts vs Gross by the Front column. Thresholds live
+in `GROSS_BIG` and `HIT_AGE` near the top of the parser in `index.html`.
+
+The hit-list target board on the page is display-only; earned Roman Candles come
+from the Car Deals report.
 
 ## Notes
 
